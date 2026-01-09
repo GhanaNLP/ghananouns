@@ -421,7 +421,7 @@ if __name__ == "__main__":
             # Set use_thinking=False for faster processing (recommended)
             # Set filter_non_nouns=False to keep abstract nouns, True to exclude them
             concrete_df, full_df = process_csv_in_batches(
-                input_file='eng-twi.csv',
+                input_file='all_nouns.csv',
                 output_file='concrete_nouns_only.csv',
                 text_column='text',  # Change to match your column name
                 use_thinking=False,  # Set to True to see reasoning
