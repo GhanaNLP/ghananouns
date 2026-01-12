@@ -18,7 +18,7 @@ for import_name, pip_spec in pkgs.items():
 # Normal imports
 # ------------------------------------------------------------
 import pandas as pd
-from openai import OpenAI, APITimeoutError, APIConnectionError, RateLimitError
+from openai import OpenAI, APITimeoutError, APIConnectionError, RateLimitError, APIError
 import json
 from tqdm import tqdm
 import time
@@ -31,8 +31,17 @@ import os
 MISTRAL_API_KEY = "your_mistral_api_key_here"  # ← put key here
 client = OpenAI(base_url="https://api.mistral.ai/v1", api_key=MISTRAL_API_KEY)
 MODEL = "mistral-large-latest"
-BATCH_SIZE = 200  # this level to improve recall, but you can experiment with higher numbers
+BATCH_SIZE = 200  # keep as you wish
 RESUME_STATE_FILE = "classification_resume_state.json"
+
+# -----------------------------------------------------------
+# RETRY CONFIG
+# -----------------------------------------------------------
+MAX_NETWORK_RETRIES = 100  # Maximum retries for network errors (practically infinite)
+MAX_CONTENT_RETRIES = 3    # Maximum retries for content/parsing errors
+INITIAL_RETRY_DELAY = 1    # Initial retry delay in seconds
+MAX_RETRY_DELAY = 300      # Maximum retry delay in seconds (5 minutes)
+BACKOFF_FACTOR = 2         # Exponential backoff factor
 
 # -----------------------------------------------------------
 # UTILS
@@ -67,19 +76,41 @@ def clear_resume_state():
         os.remove(RESUME_STATE_FILE)
     print("  🗑️  Cleared resume state")
 
+def calculate_retry_delay(attempt, is_network_error=False):
+    """Calculate exponential backoff delay with jitter"""
+    if is_network_error:
+        # Longer delays for network errors
+        delay = min(INITIAL_RETRY_DELAY * (BACKOFF_FACTOR ** (attempt - 1)), MAX_RETRY_DELAY)
+    else:
+        # Shorter delays for content errors
+        delay = min(INITIAL_RETRY_DELAY * (BACKOFF_FACTOR ** (attempt - 1)), 30)
+    
+    # Add jitter (±10%)
+    jitter = delay * 0.1
+    delay += (jitter * (2 * (time.time() % 1) - 1))
+    return max(1, delay)  # Minimum 1 second
+
+def safe_sleep(seconds, interrupt_check_interval=5):
+    """Sleep with interrupt checking"""
+    end_time = time.time() + seconds
+    while time.time() < end_time:
+        remaining = end_time - time.time()
+        sleep_time = min(interrupt_check_interval, remaining)
+        if sleep_time <= 0:
+            break
+        time.sleep(sleep_time)
+
 # -----------------------------------------------------------
-# 1.  RETRY-AWARE CLASSIFIER
+# 1.  ENHANCED RETRY-AWARE CLASSIFIER
 # -----------------------------------------------------------
-def classify_batch_concrete_nouns(words, max_retries=3):
+def classify_batch_concrete_nouns(words):
     """
-    Returns List[dict] on success
-    Returns None only if *network/timeout* persists after retries
-    (wrong-length replies are handled inside, not None)
+    Classify a batch of words with enhanced retry logic.
+    Returns List[dict] on success, None on content failure after retries.
     """
     n = len(words)
     word_list = "\n".join([f"{i+1}. {w}" for i, w in enumerate(words)])
 
-    # Two prompts: normal → strict
     prompts = [
         f"""Classify each word/phrase into one of three categories: CONCRETE, ABSTRACT, or NON-NOUN. in the SAME order and dont try to do any cleaning or splitting of the input words. You must classify them exactly as they are. DONT return more entries than you were given, even if one entry contains muliple words.
         
@@ -117,10 +148,17 @@ Reply format (no other text):
 Labels: CONCRETE, ABSTRACT, or NON-NOUN."""
     ]
 
-    for attempt in range(1, max_retries + 1):
-        prompt = prompts[1] if attempt > 1 else prompts[0]  # stricter on retry
+    network_attempt = 0
+    content_attempt = 0
+    
+    while True:
+        # Select prompt (stricter on retry for content errors)
+        prompt = prompts[1] if content_attempt > 0 else prompts[0]
+        
         try:
-            print(f"  → Sending request to {MODEL} (attempt {attempt}/{max_retries})...")
+            network_attempt += 1
+            print(f"  → Sending request to {MODEL} (Network attempt {network_attempt})...")
+            
             completion = client.chat.completions.create(
                 model=MODEL,
                 messages=[{"role": "user", "content": prompt}],
@@ -128,7 +166,7 @@ Labels: CONCRETE, ABSTRACT, or NON-NOUN."""
                 top_p=0.95,
                 max_tokens=n * 40,
                 stream=False,
-                timeout=60
+                timeout=120  # Increased timeout
             )
 
             content = completion.choices[0].message.content.strip()
@@ -146,39 +184,53 @@ Labels: CONCRETE, ABSTRACT, or NON-NOUN."""
             content = content[start_idx:end_idx]
 
             classifications = json.loads(content)
+            
             # --- validation -------------------------------------------------------
             if not isinstance(classifications, list) or len(classifications) != n:
                 raise ValueError(
                     f"Expected {n} results, got {len(classifications) if isinstance(classifications, list) else 'invalid'}"
                 )
-            print(f"  ✓ Valid response (attempt {attempt})")
+            
+            # Validate each entry
+            for i, cls in enumerate(classifications):
+                if not isinstance(cls, dict) or 'word' not in cls or 'label' not in cls:
+                    raise ValueError(f"Invalid entry at position {i}: {cls}")
+                if cls['label'] not in ['CONCRETE', 'ABSTRACT', 'NON-NOUN']:
+                    raise ValueError(f"Invalid label at position {i}: {cls['label']}")
+            
+            print(f"  ✓ Valid response")
             return classifications
 
-        except (APITimeoutError, APIConnectionError) as e:
-            # Network-level failure → stop entire run
-            print(f"  ❌ Network/timeout error on attempt {attempt}: {e}")
-            if attempt < max_retries:
-                wait = 2 ** attempt
-                print(f"  ⏳ Retrying in {wait}s...")
-                time.sleep(wait)
-            else:
-                print("  ❌ Giving up after 3 attempts – cannot reach model")
-                return "NETWORK_FAIL"  # special sentinel
-
+        except (APITimeoutError, APIConnectionError, APIError) as e:
+            # Network-level failure → retry indefinitely
+            delay = calculate_retry_delay(network_attempt, is_network_error=True)
+            print(f"  🔄 Network/timeout error: {e}")
+            print(f"  ⏳ Retrying in {delay:.1f}s (Network attempt {network_attempt})...")
+            safe_sleep(delay)
+            continue  # Continue retrying indefinitely
+            
         except (RateLimitError, json.JSONDecodeError, ValueError) as e:
-            # Model replied but content is bad → tag as unknown after retries
-            print(f"  ⚠️  Content issue on attempt {attempt}: {e}")
-            if attempt < max_retries:
-                wait = 2 ** attempt
-                print(f"  ⏳ Retrying in {wait}s...")
-                time.sleep(wait)
-            else:
-                print("  ⚠️  Classifying batch as UNKNOWN after 3 attempts")
-                return None  # caller will tag UNKNOWN
+            # Model replied but content is bad
+            content_attempt += 1
+            if content_attempt >= MAX_CONTENT_RETRIES:
+                print(f"  ⚠️  Content issue after {MAX_CONTENT_RETRIES} attempts: {e}")
+                print(f"  ⚠️  Classifying batch as UNKNOWN")
+                return None
+                
+            delay = calculate_retry_delay(content_attempt, is_network_error=False)
+            print(f"  🔄 Content issue on attempt {content_attempt}/{MAX_CONTENT_RETRIES}: {e}")
+            print(f"  ⏳ Retrying in {delay:.1f}s...")
+            safe_sleep(delay)
+            
+        except KeyboardInterrupt:
+            raise  # Re-raise to be caught by outer handler
+            
         except Exception as e:
-            print(f"  ✗ Unexpected error on attempt {attempt}: {e}")
-            return None
-    return None
+            print(f"  ⚠️  Unexpected error: {e}")
+            # For unexpected errors, retry with network error logic
+            delay = calculate_retry_delay(network_attempt, is_network_error=True)
+            print(f"  ⏳ Retrying in {delay:.1f}s...")
+            safe_sleep(delay)
 
 # -----------------------------------------------------------
 # helper – build unique-word list + reverse index
@@ -196,7 +248,7 @@ def get_unique_words_with_mapping(df, text_column):
     return unique_words, word_to_indices
 
 # -----------------------------------------------------------
-# 2.  BATCH PROCESSOR
+# 2.  BATCH PROCESSOR WITH ENHANCED RETRY
 # -----------------------------------------------------------
 def process_csv_in_batches(input_file, output_file, text_column='text',
                            use_thinking=False, filter_non_nouns=True, resume=True):
@@ -227,7 +279,8 @@ def process_csv_in_batches(input_file, output_file, text_column='text',
         else:
             print("  🆕 Starting fresh (no valid resume state)")
 
-    print(f"\nProcessing {len(unique_words)} unique words in {total_batches} batches of {BATCH_SIZE}...\n")
+    print(f"\nProcessing {len(unique_words)} unique words in {total_batches} batches of {BATCH_SIZE}...")
+    print(f"Will retry indefinitely on network errors with exponential backoff up to {MAX_RETRY_DELAY}s\n")
 
     successful_batches = failed_batches = 0
     classify_func = classify_batch_concrete_nouns
@@ -240,23 +293,18 @@ def process_csv_in_batches(input_file, output_file, text_column='text',
             batch_num = (i // BATCH_SIZE) + 1
 
             print(f"\n[Batch {batch_num}/{total_batches}] Processing {len(batch)} words...")
+            print(f"  Unique words classified so far: {len(word_classifications)}/{len(unique_words)}")
 
-            # >>>>>>  RETRY-AWARE CALL  <<<<<<
+            # Classify with enhanced retry logic
             classifications = classify_func(batch)
 
-            if classifications == "NETWORK_FAIL":
-                # Network/timeout persisted → stop entire run
-                print("\n\n❌ Cannot reach the model after 3 retries – stopping run.")
-                print("  💾 Progress saved – fix connection and resume with the same command")
-                return None, None
-
-            if classifications:                       # SUCCESS
+            if classifications:  # SUCCESS
                 for cls in classifications:
                     if isinstance(cls, dict) and 'word' in cls and 'label' in cls:
                         word_classifications[cls['word']] = cls['label']
                 print(f"  ✓ Successfully classified {len(classifications)}/{len(batch)} words")
                 successful_batches += 1
-            else:                                     # CONTENT failure after retries
+            else:  # CONTENT failure after retries
                 print(f"  ⚠️  Classifying {len(batch)} words as UNKNOWN after retries")
                 for w in batch:
                     word_classifications[w] = 'UNKNOWN'
@@ -267,11 +315,12 @@ def process_csv_in_batches(input_file, output_file, text_column='text',
                 save_resume_state(batch_num, word_classifications,
                                 total_batches, input_file, output_file, text_column)
 
+            # Small delay between successful batches to avoid rate limits
             if i + BATCH_SIZE < len(unique_words):
                 time.sleep(0.5)
 
         # finished
-        if resume and start_batch < total_batches:
+        if resume:
             clear_resume_state()
             print("  ✅ Processing completed successfully – resume state cleared")
 
@@ -314,7 +363,7 @@ def process_csv_in_batches(input_file, output_file, text_column='text',
 
     print(f"\n{'='*60}\nFINAL RESULTS:\n{'='*60}")
     print(f"Total rows: {len(df)}")
-    print(f"API calls: {total_batches}  |  Successful: {successful_batches}  |  Failed: {failed_batches}")
+    print(f"Total batches: {total_batches}  |  Successful: {successful_batches}  |  Failed: {failed_batches}")
     print(f"CONCRETE: {concrete}  |  ABSTRACT: {abstract}  |  NON-NOUN: {non_noun}  |  UNKNOWN: {unknown}")
     print(f"Output: {output_file}  |  Full labels: {full_out}")
     print(f"{'='*60}\n")
@@ -336,14 +385,14 @@ def test_api_connection():
     print(f"Model: {MODEL}\n")
     test_words = ["dog", "happiness", "run", "beautiful", "table", "freedom"]
     result = classify_batch_concrete_nouns(test_words)
-    if result and result != "NETWORK_FAIL":
+    if result:
         print("\n✓ API connection successful!\n")
         for item in result:
             sym = "✓" if item['label'] == 'CONCRETE' else "✗" if item['label'] == 'ABSTRACT' else "⚠"
             print(f"  {sym} {item['word']:15} → {item['label']}")
         return True
     else:
-        print("\n✗ API connection failed")
+        print("\n✗ API connection test failed")
         print("1. Verify key at https://console.mistral.ai/")
         print("2. Check internet / firewall")
         print("3. pip install -U openai")
