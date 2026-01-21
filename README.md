@@ -25,10 +25,10 @@ The output is provided in multiple CSV files, categorized by their minimum frequ
 
 | File                | Threshold         | Usage Case                                          |
 | ------------------- | ----------------- | --------------------------------------------------- |
-| `nouns_min_2.csv`   | ≥ 1 occurrence    | Comprehensive vocabulary for research.              |
-| `nouns_min_10.csv`  | ≥ 10 occurrences  | Standard common nouns for general NLP tasks.        |
-| `nouns_min_50.csv`  | ≥ 50 occurrences  | High-confidence terminology for MT anchoring.       |
-| `nouns_min_500.csv` | ≥ 500 occurrences | Core concrete nouns essential for every dictionary. |
+| `nouns_all.csv`   | ≥ 1 occurrence    | Comprehensive vocabulary for research.              |
+| `nouns_min_2.csv`  | ≥ 2 occurrences  | Standard common nouns for general NLP tasks.        |
+| `nouns_min_5.csv`  | ≥ 5 occurrences  | High-confidence terminology for MT anchoring.       |
+| `nouns_min_10.csv` | ≥ 10 occurrences | Core concrete nouns essential for every dictionary. |
 
 ### CSV Format
 
