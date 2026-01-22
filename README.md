@@ -22,37 +22,65 @@ The dataset was produced through a multi-stage pipeline:
 
 The dataset has been reorganized to provide a single source of truth for frequencies and individual translation files for a wide array of Ghanaian languages.
 
-### 1. Master Frequency List
+## Dataset Status
 
-- **File:** `nouns_all_en.csv`
-- **Description:** A comprehensive file containing all verified nouns along with their frequency counts from the 2-million-word corpus. This allows researchers to filter the data based on their own custom thresholds.
-- **Columns:**
-  - `noun`: The cleaned concrete noun (English).
-  - `frequency`: Total number of occurrences.
+The dataset is currently being translated across a wide range of Ghanaian languages. We have categorized these into **Completed** (fully translated and verified) and **In Progress** (awaiting translation or verification).
 
-### 2. Language-Specific Lists
+### Completed Languages
 
-We provide individual noun lists for various Ghanaian languages to facilitate human evaluation and other NLP tasks.
+| Language | Status      |
+| -------- | ----------- |
+| Twi      | ✅ Completed |
 
-**Note on Translation Quality:** Accuracy varies by language. For detailed metrics on estimated overall accuracy, please refer to the results from the [Nsanku Project](https://github.com/GhanaNLP/nsanku?tab=readme-ov-file#language-specific-results).
+### Languages In Progress
 
-| Language | Status        |
-| -------- | ------------- |
-| Twi  | Coming Soon  |
-| Abron    | Coming Soon |
-| Dangme   | Coming Soon |
-| Dagbani  | Coming Soon |
-| Ewe      | Coming Soon |
-| Fante    | Coming Soon |
-| Nzema    | Coming Soon |
-| Esahie   | Coming Soon |
-| Ga       | Coming Soon |
-| Farefare | Coming Soon |
+The following languages are currently in the queue for translation. We welcome contributors to help move these to the completed list.
+
+| Language         | Status        | Language         | Status        |
+| ---------------- | ------------- | ---------------- | ------------- |
+| Abron            | ⏳ Coming Soon | Mampruli         | ⏳ Coming Soon |
+| Gikyode          | ⏳ Coming Soon | Deg              | ⏳ Coming Soon |
+| Dangme           | ⏳ Coming Soon | Nawuri           | ⏳ Coming Soon |
+| Siwu             | ⏳ Coming Soon | Chumburung       | ⏳ Coming Soon |
+| Anyin            | ⏳ Coming Soon | Nkonya           | ⏳ Coming Soon |
+| Avatime          | ⏳ Coming Soon | Delo             | ⏳ Coming Soon |
+| Bisa             | ⏳ Coming Soon | Nyagbo           | ⏳ Coming Soon |
+| Bimoba           | ⏳ Coming Soon | Nzema            | ⏳ Coming Soon |
+| Southern Birifor | ⏳ Coming Soon | Esahie           | ⏳ Coming Soon |
+| Tuwuli           | ⏳ Coming Soon | Paasaal          | ⏳ Coming Soon |
+| Ntcham           | ⏳ Coming Soon | Tumulung Sisaala | ⏳ Coming Soon |
+| Buli             | ⏳ Coming Soon | Selee            | ⏳ Coming Soon |
+| Anufo            | ⏳ Coming Soon | Tafi             | ⏳ Coming Soon |
+| Dagbani          | ⏳ Coming Soon | Tampulma         | ⏳ Coming Soon |
+| Southern Dagaare | ⏳ Coming Soon | Vagla            | ⏳ Coming Soon |
+| Ewe              | ⏳ Coming Soon | Konkomba         | ⏳ Coming Soon |
+| Fante            | ⏳ Coming Soon | Kasem            | ⏳ Coming Soon |
+| Ga               | ⏳ Coming Soon | Farefare         | ⏳ Coming Soon |
+| Gonja            | ⏳ Coming Soon | Hanga            | ⏳ Coming Soon |
+| Konni            | ⏳ Coming Soon | Kusaal           | ⏳ Coming Soon |
+| Lelemi           | ⏳ Coming Soon | Sekpele          | ⏳ Coming Soon |
+
+## How to Contribute
+
+We are looking for volunteers to help complete the translations for the languages listed above. If you would like to contribute, please follow these steps:
+
+1. **Identify an Incomplete Language:** Check the "Languages In Progress" section above or look into the language folders to see which nouns have not yet been translated.
+2. **Locate the Scripts:** Navigate to the `translation_scripts/` folder in this repository.
+3. **Run the Translation Script:**
+   - Choose the incomplete language you wish to work on.
+   - Execute the translation script provided in the folder (ensure you have the necessary environment variables/API keys set up as described in the script's documentation).
+4. **Verify the Output:** Once the script finishes, review the generated file for any obvious formatting issues.
+5. **Submit Your Contribution:**
+   - Create a new branch for your language.
+   - Add the completed translation file to the appropriate directory.
+   - Open a **Pull Request** (PR) to merge your changes into the main repository.
+
+By contributing, you are helping to build a vital resource for Ghanaian Machine Translation and language technology.
 
 
 ## Contributors
 
-This project is a collaborative effort. We would like to thank the following volunteers who dedicated their time to creating the dataset:
+This project is a collaborative effort. We would like to thank the following volunteers who have dedicated their time to creating this resource:
 
 1. [Jonathan Ato Markin](https://www.linkedin.com/in/atomarkin/)
 2. [Emmanuel Saah](https://www.linkedin.com/in/emmanuel-saah/)
