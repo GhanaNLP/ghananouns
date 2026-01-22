@@ -32,23 +32,23 @@ The dataset has been reorganized to provide a single source of truth for frequen
 
 ### 2. Language-Specific Lists
 
-We provide individual noun lists for the following Ghanaian languages to facilitate human evaluation and other NLP use cases.
+We provide individual noun lists for various Ghanaian languages to facilitate human evaluation and other NLP tasks.
 
-**Note on Translation Quality:** The quality of these translations may differ significantly based on the specific language. For detailed information on the estimated overall accuracy for each language, please refer to the results from the [Nsanku Project](https://github.com/GhanaNLP/nsanku?tab=readme-ov-file#language-specific-results).
+**Note on Translation Quality:** Accuracy varies by language. For detailed metrics on estimated overall accuracy, please refer to the results from the [Nsanku Project](https://github.com/GhanaNLP/nsanku?tab=readme-ov-file#language-specific-results).
 
-|                  |          |                  |                  |
-| ---------------- | -------- | ---------------- | ---------------- |
-| Abron            | Gikyode  | Dangme           | Siwu             |
-| Anyin            | Avatime  | Bisa             | Bimoba           |
-| Southern Birifor | Tuwuli   | Ntcham           | Buli             |
-| Anufo            | Dagbani  | Southern Dagaare | Ewe              |
-| Fante            | Ga       | Gonja            | Farefare         |
-| Hanga            | Konni    | Kusaal           | Lelemi           |
-| Sekpele          | Mampruli | Deg              | Nawuri           |
-| Chumburung       | Nkonya   | Delo             | Nyagbo           |
-| Nzema            | Esahie   | Paasaal          | Tumulung Sisaala |
-| Selee            | Tafi     | Tampulma         | Twi              |
-| Vagla            | Konkomba | Kasem            |                  |
+| Language | Status        |
+| -------- | ------------- |
+| **Twi**  | Available   |
+| Abron    | Coming Soon |
+| Dangme   | Coming Soon |
+| Dagbani  | Coming Soon |
+| Ewe      | Coming Soon |
+| Fante    | Coming Soon |
+| Nzema    | Coming Soon |
+| Esahie   | Coming Soon |
+| Ga       | Coming Soon |
+| Farefare | Coming Soon |
+
 
 ## Contributors
 
