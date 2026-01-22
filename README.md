@@ -1,22 +1,16 @@
 # GhanaNouns: Multilingual Dataset of Ghanaian Nouns
 
-This repository contains a multilingual dataset of nouns extracted from over 2 million words and phrases found in Ghanaian news articles provided by Ghana NLP to improve the quality of Machine Translation.
-
-## Overview
-
-In low-resource language contexts, nouns are essential for clear communication, but standard Machine Translation models have yet to catch up with accurate translations for this diverse and important part of speech.
-
-By providing this dataset, our goal is to establish a baseline that can be used to collect accurate translations of vocabulary specifically relevant to the Ghanaian context.
+This is an onoing project to create a dataset of nouns in the Ghanaian context and translate them to Ghanaian languages using Large Language Models that have strong performance for Ghanaian languages.
 
 ## Methodology
 
-The dataset was produced through a multi-stage pipeline:
+The dataset was produced using the stages below:
 
 1. 2 million potential nouns were identified from Ghanaian news archives using spaCy.
 2. Because rule-based POS tagging can be imprecise, we used the Mistral AI API to verify and filter the list.
 3. The final set was filtered to exclude abstract concepts, keeping only common concrete nouns.
 4. Nouns were mapped against their original occurrence counts to determine their relevance.
-5. Translations into various Ghanaian languages were generated using Google Gemini 3 Flash.
+5. Translations into various Ghanaian languages were generated using Google Gemini.
 
 ## Dataset Structure
 
@@ -24,7 +18,7 @@ The dataset has been reorganized to provide a single source of truth for frequen
 
 ## Dataset Status
 
-The dataset is currently being translated across a wide range of Ghanaian languages. We have categorized these into **Completed** (fully translated and verified) and **In Progress** (awaiting translation or verification).
+The dataset is currently being translated across a wide range of Ghanaian languages using Google Gemini API which has proven to be the strongest model for Ghanaian languages. Accuracy varies by language, and we don't expect the translation to be perfect. For detailed metrics on estimated overall accuracy, please refer to the results from the [Nsanku Project](https://github.com/GhanaNLP/nsanku?tab=readme-ov-file#language-specific-results). 
 
 ### Completed Languages
 
@@ -68,14 +62,10 @@ We are looking for volunteers to help complete the translations for the language
 2. **Locate the Scripts:** Navigate to the `translation_scripts/` folder in this repository.
 3. **Run the Translation Script:**
    - Choose the incomplete language you wish to work on.
-   - Execute the translation script provided in the folder (ensure you have the necessary environment variables/API keys set up as described in the script's documentation).
-4. **Verify the Output:** Once the script finishes, review the generated file for any obvious formatting issues.
+   - Execute the translation script provided in the folder for the language you want to create a translation for (ensure you have the Google Gemini API Access).
 5. **Submit Your Contribution:**
-   - Create a new branch for your language.
-   - Add the completed translation file to the appropriate directory.
+   - Add the completed translation file to the data directory.
    - Open a **Pull Request** (PR) to merge your changes into the main repository.
-
-By contributing, you are helping to build a vital resource for Ghanaian Machine Translation and language technology.
 
 
 ## Contributors
