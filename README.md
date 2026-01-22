@@ -12,11 +12,11 @@ By providing this dataset, our goal is to establish a baseline that can be used 
 
 The dataset was produced through a multi-stage pipeline:
 
-1. **Initial Extraction:** 2 million potential nouns were identified from Ghanaian news archives using spaCy.
-2. **LLM Refinement:** Because rule-based POS tagging can be imprecise, we used the Mistral AI API to verify and filter the list.
-3. **Cleaning:** The final set was filtered to exclude abstract concepts, keeping only common concrete nouns.
-4. **Frequency Analysis:** Nouns were mapped against their original occurrence counts to determine their relevance.
-5. **Machine Translation:** Translations into various Ghanaian languages were generated using Google Gemini 3 Flash.
+1. 2 million potential nouns were identified from Ghanaian news archives using spaCy.
+2. Because rule-based POS tagging can be imprecise, we used the Mistral AI API to verify and filter the list.
+3. The final set was filtered to exclude abstract concepts, keeping only common concrete nouns.
+4. Nouns were mapped against their original occurrence counts to determine their relevance.
+5. Translations into various Ghanaian languages were generated using Google Gemini 3 Flash.
 
 ## Dataset Structure
 
