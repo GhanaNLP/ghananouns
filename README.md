@@ -24,7 +24,7 @@ The dataset has been reorganized to provide a single source of truth for frequen
 
 ### 1. Master Frequency List
 
-- **File:** `nouns_master_list.csv`
+- **File:** `nouns_all_en.csv`
 - **Description:** A comprehensive file containing all verified nouns along with their frequency counts from the 2-million-word corpus. This allows researchers to filter the data based on their own custom thresholds.
 - **Columns:**
   - `noun`: The cleaned concrete noun (English).
