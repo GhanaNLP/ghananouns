@@ -4,7 +4,7 @@ This is an onoing project to create a dataset of nouns in the Ghanaian context a
 
 ## Methodology
 
-The dataset was produced using the stages below:
+The dataset was produced using these steps:
 
 1. 2 million potential nouns were identified from Ghanaian news archives using spaCy.
 2. Because rule-based POS tagging can be imprecise, we used the Mistral AI API to verify and filter the list.
