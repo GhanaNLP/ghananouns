@@ -69,8 +69,8 @@ We are looking for volunteers to help complete the translations for the language
    - Choose the incomplete language you wish to work on.
    - Execute the translation script provided in the folder for the language you want to create a translation for (ensure you have the Google Gemini API Access).
 5. **Submit Your Contribution:**
-   - Add the completed translation file to the data directory.
-   - Open a **Pull Request** (PR) to merge your changes into the main repository.
+   - Add the completed translation file to the `contributions/` directory.
+   - Open a **Pull Request** (PR) to submit the dataset.
 
 
 ## Contributors
